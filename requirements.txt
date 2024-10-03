@@ -1,0 +1,7 @@
+# \mypython\micropython\tools\mpremote
+
+pytest
+pytest-datadir
+hypothesis 
+
+mpflash
