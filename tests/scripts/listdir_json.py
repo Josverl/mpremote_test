@@ -22,12 +22,12 @@ def listdir(path=".", sub=False, JSON=True, hash=False):
     # print("+listdir:{}".format(path))
     try:
         files = os.listdir(path)
-    except:
+    except Exception:
         files = []
     for file in files:
         # get size of each file
         info = {"path": path, "Name": file, "size": 0}
-        if path[-1] == "/":
+        if path and path[-1] == "/":
             full = "%s%s" % (path, file)
         else:
             full = "%s/%s" % (path, file)

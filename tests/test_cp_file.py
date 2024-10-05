@@ -6,7 +6,7 @@ from mpflash.mpremoteboard import MPRemoteBoard
 import random, string
 
 from collect_boards import boards
-from helpers import mcu_file_exists, mcu_file_size
+from helpers import mcu_file_exists,  copy_and_verify_file
 
 
 @pytest.mark.parametrize(
@@ -57,36 +57,6 @@ def test_copy_file_to(
         board.run_command(f"rm :{file_name}")
 
 
-def copy_and_verify_file(
-    board: MPRemoteBoard,
-    shared_datadir: Path,
-    dest_folder: str,
-    file: Path,
-    dest_file_name: str = "",
-):
-    """Copy a file to the remote board and verify that it is there and has the same content"""
-    dest_file_name = dest_file_name or file.name
-    r = board.run_command(f"cp {file.as_posix()} :{dest_folder}{dest_file_name}")
-    assert r[0] == 0
-
-    # is file listed as a remote file ( in the dest_folder)
-    r = board.run_command(f"ls :{dest_folder}")
-    assert mcu_file_exists(r, dest_file_name)
-
-    # get the line with the file name
-    size = mcu_file_size(r, f"{dest_file_name}")
-    # check the file size
-    assert size == file.stat().st_size
-
-    # create a return folder and copy the file back
-    return_folder = shared_datadir / "return"
-    return_folder.mkdir(exist_ok=True)
-    r = board.run_command(f"cp :{dest_folder}{dest_file_name} {return_folder.as_posix()}")
-    assert r[0] == 0
-    # check if the file is there
-    assert (return_folder / dest_file_name).exists()
-    # check if the file has the same content
-    assert (return_folder / dest_file_name).read_bytes() == file.read_bytes()
 
 
 @pytest.mark.parametrize(

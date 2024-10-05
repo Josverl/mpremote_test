@@ -1,9 +1,10 @@
 from pathlib import Path
+from typing import Dict
 import pytest
 from mpflash.mpremoteboard import MPRemoteBoard
 
 from collect_boards import boards
-from helpers import mcu_file_exists, listdir, wipe_filesystem
+from helpers import mcu_file_exists, listdir, wipe_filesystem, expected_remote_name
 
 
 @pytest.mark.parametrize(
@@ -56,7 +57,7 @@ def test_copy_folder_to(
 
         # is FOLDER listed as a remote file + / ( in the dest_folder)
         r = board.run_command(f"ls :{dest_folder}")
-        assert mcu_file_exists(r, folder_name + "/")  # çause it is a folder
+        assert mcu_file_exists(r, f"{folder_name}/")
 
         # Recursivly check the content of the folder
         src_content = list(folder.rglob("*"))
@@ -65,17 +66,9 @@ def test_copy_folder_to(
 
         for item in src_content:
             # check if the file exists
-            expected_name = dest_folder + item.relative_to(folder.parent).as_posix()
-            # if not specified the stm32 can use /flash or /sd ( or other mounts)
-            if dest_folder == "":
-                if board.port in ["stm32"]:
-                    for mount in ["/sd", "/flash"]:
-                        if f"{mount}/{expected_name}" in mcu_files:
-                            expected_name = f"{mount}/{expected_name}"
-                            break
-                else:
-                    # other ports host the files in the root
-                    expected_name = f"/{expected_name}"
+            expected_name = expected_remote_name(
+                board, item.relative_to(folder.parent), dest_folder, mcu_files
+            )
 
             assert expected_name in mcu_files, f"File {expected_name} not found"
             if item.is_dir():
@@ -115,3 +108,4 @@ def test_copy_folder_to(
         except Exception as e:
             print(e)
         pass
+
